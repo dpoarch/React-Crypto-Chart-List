@@ -9,3 +9,8 @@ body {
 	position: absolute;
 	right: 30px;
 }
+
+.image{
+	width: 30px;
+	margin-left: 10px;
+  }

@@ -3,21 +3,27 @@ import axios from "axios";
 import { useEffect, useState } from "react";
 import {
   BrowserRouter as Router,
-  Switch,
-  Route,
   Link,
   useParams
 } from "react-router-dom";
 import TableCoins from "./components/TableCoins";
+import Home from "./components/Home/Home"
+import Login from "./components/Login/Login";
+import Web3 from "web3";
 
 function App() {
 
   let { id } = useParams();
-  console.log(id);
+  const [isConnected, setIsConnected] = useState(false);
+  const [currentAccount, setCurrentAccount] = useState(null);
+  const [balance, setBalance] = useState(0);
+
   const [coins, setCoins] = useState([]);
   const [search, setSearch] = useState("");
   const coinList = "/";
   const top10List = "/top10";
+
+
   const getData = async () => {
     try {
       const res = await axios.get(
@@ -28,6 +34,27 @@ function App() {
     } catch (error) {
       console.error(error);
     }
+  };
+
+  const onLogin = async (provider) => {
+    const web3 = new Web3(provider);
+    const accounts = await web3.eth.getAccounts();
+    if (accounts.length === 0) {
+      console.log("Please connect to MetaMask!");
+    } else if (accounts[0] !== currentAccount) {
+      setCurrentAccount(accounts[0]);
+      const accBalanceEth = web3.utils.fromWei(
+        await web3.eth.getBalance(accounts[0]),
+        "ether"
+      );
+
+      setBalance(Number(accBalanceEth).toFixed(6));
+      setIsConnected(true);
+    }
+  };
+
+  const onLogout = () => {
+    setIsConnected(false);
   };
 
   useEffect(() => {
@@ -53,21 +80,19 @@ function App() {
             </li>
           </ul>
           <form className="form-inline my-2 my-lg-0">
-          <input
-              type="text"
-              placeholder="Search Coin"
-              className="form-control mr-sm-2"
-              autoFocus
-              onChange={(e) => setSearch(e.target.value)}
-            />
+              <a class="btn btn-outline-primary my-2 my-sm-0" type="submit"><img className="image" src={"https://upload.wikimedia.org/wikipedia/commons/thumb/3/36/MetaMask_Fox.svg/1200px-MetaMask_Fox.svg.png"} />{currentAccount}</a>
             </form>
         </div>
       </nav>
         
         <div className="container">
           <div className="row">
-            
-
+          {!isConnected && <Login onLogin={onLogin} onLogout={onLogout} />}
+          {isConnected && (
+            <Home currentAccount={currentAccount} balance={balance} />
+          )}
+          </div>
+          <div className="row">
             <TableCoins coins={coins} search={search} />
           </div>
         </div>
